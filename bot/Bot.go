@@ -6,6 +6,7 @@ import (
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"log"
+	"math/rand"
 	"strconv"
 	"strings"
 	"sync"
@@ -22,6 +23,24 @@ type Bot struct {
 	client         *tgbotapi.BotAPI
 	chatToTimezone map[int64]int64
 	chatToTimer    map[int64]map[string]*time.Timer
+}
+
+func NewBot() *Bot {
+	var token = config.GetToken()
+	var httpClient = getHttpClient()
+
+	client, err := tgbotapi.NewBotAPIWithClient(token, httpClient)
+	//client.Debug = true
+	if err != nil {
+		log.Panic(err)
+	}
+
+	chatToTimezone := make(map[int64]int64)
+	chatToTimer := make(map[int64]map[string]*time.Timer)
+
+	log.Printf("Authorized on account %s", client.Self.UserName)
+
+	return &Bot{client, chatToTimezone, chatToTimer}
 }
 
 func (b *Bot) handleUpdates() {
@@ -149,8 +168,12 @@ func (b *Bot) createTimerJob(mTimer *Timer) {
 func (b *Bot) createTimerChan(mTimer *Timer, duration time.Duration) {
 	timer := time.NewTimer(duration)
 
+	if b.chatToTimer[mTimer.chatId] == nil {
+		b.chatToTimer[mTimer.chatId] = make(map[string]*time.Timer)
+	}
 	chatMap := b.chatToTimer[mTimer.chatId]
-	shaStr := shaString(mTimer.time + mTimer.text)
+
+	shaStr := shaString(strconv.Itoa(rand.Int()))
 
 	chatMap[shaStr] = timer
 
@@ -190,21 +213,17 @@ func (b *Bot) handleStatus(msg *tgbotapi.MessageConfig) {
 }
 
 func (b *Bot) handleClear(update tgbotapi.Update, msg *tgbotapi.MessageConfig) {
-	msg.Text = "TBD"
-}
-
-func NewBot() *Bot {
-	var token = config.GetToken()
-
-	client, err := tgbotapi.NewBotAPI(token)
-	//client.Debug = true
-	if err != nil {
-		log.Panic(err)
+	res := strings.Split(update.Message.Text, " ")
+	if len(res) == 2 && res[1] == "timezone" {
+		b.chatToTimezone[msg.ChatID] = 0
+		return
 	}
-	chatToTimezone := make(map[int64]int64)
-	chatToTimer := make(map[int64]map[string]*time.Timer)
-
-	log.Printf("Authorized on account %s", client.Self.UserName)
-
-	return &Bot{client, chatToTimezone, chatToTimer}
+	timersMap := b.chatToTimer[msg.ChatID]
+	if timersMap == nil {
+		return
+	}
+	for key, timer := range timersMap {
+		timer.Stop()
+		delete(timersMap, key)
+	}
 }

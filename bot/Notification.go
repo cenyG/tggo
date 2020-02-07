@@ -6,14 +6,14 @@ import (
 )
 
 type Notification struct {
-	time    string
-	text    string
-	repeat  bool
+	time   string
+	text   string
+	repeat bool
 	chatId int64
 }
 
 func NewNotification(text string, chatId int64) (*Notification, error) {
-	res:= strings.Split(text, " ")
+	res := strings.Split(text, " ")
 
 	if len(res) == 2 { // HH:mm text
 		mTime := res[0]

@@ -2,6 +2,10 @@ package bot
 
 import (
 	"errors"
+	"log"
+	"net/http"
+	"net/url"
+	"os"
 	"strconv"
 )
 
@@ -23,4 +27,23 @@ func timezoneParse(timezone string) (int64, error) {
 
 		return number, nil
 	}
+}
+
+func getHttpClient() *http.Client {
+	proxy := os.Getenv("PROXY")
+	if proxy != "" {
+		proxyURL, err := url.Parse(proxy)
+		if err != nil {
+			log.Println(err)
+		}
+		transport := &http.Transport{
+			Proxy: http.ProxyURL(proxyURL),
+		}
+
+		httpClient := &http.Client{
+			Transport: transport,
+		}
+		return httpClient
+	}
+	return &http.Client{}
 }

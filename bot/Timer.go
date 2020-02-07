@@ -12,20 +12,17 @@ type Timer struct {
 	chatId int64
 }
 
+const defaultText = "⏰⏰⏰ Alarmed ! ! ! ⏰⏰⏰"
+
 func NewTimer(text string, chatId int64) (*Timer, error) {
 	res := strings.Split(text, " ")
 
-	if len(res) == 1 {
-		mTime := res[0]
-		text := "⏰⏰⏰ Alarmed ! ! ! ⏰⏰⏰"
-		err := validateMinSec(mTime)
-		if err != nil {
-			return nil, err
-		}
-		return &Timer{mTime, text, false, chatId}, nil
-	} else if res[0] == "every" { // every mm:ss text
+	if res[0] == "every" { // every mm:ss text
 		mTime := res[1]
 		text := strings.Join(res[2:], " ")
+		if text == "" {
+			text = defaultText
+		}
 		err := validateMinSec(mTime)
 		if err != nil {
 			return nil, err
@@ -34,6 +31,9 @@ func NewTimer(text string, chatId int64) (*Timer, error) {
 	} else { //mm:ss text
 		mTime := res[0]
 		text := strings.Join(res[1:], " ")
+		if text == "" {
+			text = defaultText
+		}
 		err := validateMinSec(mTime)
 		if err != nil {
 			return nil, err
