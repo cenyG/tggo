@@ -108,6 +108,7 @@ func parseTimeString(timeString string, utcDiff int64) (time.Duration, error) {
 		log.Printf("Wrong date: %s", timeString)
 		return 0, errors.New("wrong date format")
 	}
+	duration = duration + 2*time.Second
 
 	return duration, nil
 }
