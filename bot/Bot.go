@@ -20,9 +20,10 @@ type ConcurrentSlice struct {
 }
 
 type Bot struct {
-	client         *tgbotapi.BotAPI
-	chatToTimezone map[int64]int64
-	chatToTimer    map[int64]map[string]*time.Timer
+	client             *tgbotapi.BotAPI
+	chatToTimezone     map[int64]int64
+	chatToTimer        map[int64]map[string]*time.Timer
+	chatToNotification map[int64]map[string]*time.Timer
 }
 
 func NewBot() *Bot {
@@ -37,10 +38,11 @@ func NewBot() *Bot {
 
 	chatToTimezone := make(map[int64]int64)
 	chatToTimer := make(map[int64]map[string]*time.Timer)
+	chatToNotification := make(map[int64]map[string]*time.Timer)
 
 	log.Printf("Authorized on account %s", client.Self.UserName)
 
-	return &Bot{client, chatToTimezone, chatToTimer}
+	return &Bot{client, chatToTimezone, chatToTimer, chatToNotification}
 }
 
 func (b *Bot) handleUpdates() {
@@ -137,36 +139,36 @@ func (b *Bot) handleTimezone(update tgbotapi.Update, msg *tgbotapi.MessageConfig
 }
 
 func (b *Bot) handleSet(update tgbotapi.Update, msg *tgbotapi.MessageConfig) {
+	chatId := msg.ChatID
+	textArray := strings.Split(update.Message.Text, " ")
 
-	msg.Text = "TBD"
+	utcDiff, _ := b.chatToTimezone[chatId]
+
+	notification, err := NewNotification(textArray[1:], chatId, utcDiff)
+	if err != nil {
+		msg.Text = err.Error()
+	} else {
+		go b.createNotificationJob(notification)
+		msg.Text = "Notification set *successfully*!"
+	}
 }
 
 func (b *Bot) handleTimer(update tgbotapi.Update, msg *tgbotapi.MessageConfig) {
 	chatId := msg.ChatID
 	textArray := strings.Split(update.Message.Text, " ")
-	text := strings.Join(textArray[1:], " ")
-	myTimer, err := NewTimer(text, chatId)
+
+	myTimer, err := NewTimer(textArray[1:], chatId)
 	if err != nil {
 		msg.Text = err.Error()
 	} else {
-		b.createTimerJob(myTimer)
+		go b.createTimerJob(myTimer)
 		msg.Text = "Timer set *successfully*!"
 	}
 }
 
 func (b *Bot) createTimerJob(mTimer *Timer) {
-	timeArray := strings.Split(mTimer.time, ":")
-	minStr := timeArray[0]
-	secStr := timeArray[1]
-	min := parseInt(minStr)
-	sec := parseInt(secStr)
-	duration := time.Duration(min)*time.Minute + time.Duration(sec)*time.Second
-
-	go b.createTimerChan(mTimer, duration)
-}
-
-func (b *Bot) createTimerChan(mTimer *Timer, duration time.Duration) {
-	timer := time.NewTimer(duration)
+	timer := time.NewTimer(mTimer.duration)
+	log.Printf("[Set] %s", mTimer)
 
 	if b.chatToTimer[mTimer.chatId] == nil {
 		b.chatToTimer[mTimer.chatId] = make(map[string]*time.Timer)
@@ -174,28 +176,45 @@ func (b *Bot) createTimerChan(mTimer *Timer, duration time.Duration) {
 	chatMap := b.chatToTimer[mTimer.chatId]
 
 	shaStr := shaString(strconv.Itoa(rand.Int()))
-
 	chatMap[shaStr] = timer
 
 	timerEnd := <-timer.C
 	delete(chatMap, shaStr)
 
-	log.Printf("End timer for %d, %s", mTimer.chatId, timerEnd)
+	log.Printf("[End] %s, time: %s", mTimer, timerEnd)
 
 	msg := tgbotapi.NewMessage(mTimer.chatId, mTimer.text)
 	b.client.Send(msg)
 
 	if mTimer.repeat {
-		go b.createTimerChan(mTimer, duration)
+		go b.createTimerJob(mTimer)
 	}
 }
 
-func parseInt(str string) int64 {
-	res, err := strconv.ParseInt(str, 10, 64)
-	if err != nil {
-		log.Print("error while parse str. str:" + str)
+func (b *Bot) createNotificationJob(notification *Notification) {
+	timer := time.NewTimer(notification.duration)
+	log.Printf("[Set] %s", notification)
+
+	if b.chatToNotification[notification.chatId] == nil {
+		b.chatToNotification[notification.chatId] = make(map[string]*time.Timer)
 	}
-	return res
+	chatMap := b.chatToNotification[notification.chatId]
+
+	shaStr := shaString(strconv.Itoa(rand.Int()))
+	chatMap[shaStr] = timer
+
+	timerEnd := <-timer.C
+	delete(chatMap, shaStr)
+
+	log.Printf("[End] %s, time: %s", notification, timerEnd)
+
+	msg := tgbotapi.NewMessage(notification.chatId, notification.text)
+	b.client.Send(msg)
+
+	if notification.repeat {
+		notification.duration = 24 * time.Hour
+		go b.createNotificationJob(notification)
+	}
 }
 
 func shaString(str string) string {
@@ -209,21 +228,19 @@ func shaString(str string) string {
 func (b *Bot) handleStatus(msg *tgbotapi.MessageConfig) {
 	msg.Text = fmt.Sprintf("Timezone: *UTC%+d*\n", b.chatToTimezone[msg.ChatID])
 	msg.Text += fmt.Sprintf("Active timers: *%d*\n", len(b.chatToTimer[msg.ChatID]))
-	msg.Text += fmt.Sprintf("Active Notifications: *TBD*")
+	msg.Text += fmt.Sprintf("Active Notifications: *%d*\n", len(b.chatToNotification[msg.ChatID]))
 }
 
 func (b *Bot) handleClear(update tgbotapi.Update, msg *tgbotapi.MessageConfig) {
-	res := strings.Split(update.Message.Text, " ")
-	if len(res) == 2 && res[1] == "timezone" {
-		b.chatToTimezone[msg.ChatID] = 0
-		return
-	}
 	timersMap := b.chatToTimer[msg.ChatID]
-	if timersMap == nil {
-		return
-	}
 	for key, timer := range timersMap {
 		timer.Stop()
 		delete(timersMap, key)
+	}
+
+	notifiersMap := b.chatToNotification[msg.ChatID]
+	for key, timer := range notifiersMap {
+		timer.Stop()
+		delete(notifiersMap, key)
 	}
 }

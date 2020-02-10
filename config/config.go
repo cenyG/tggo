@@ -8,6 +8,7 @@ import (
 
 type Config struct {
 	Token string
+	Proxy string
 }
 
 var config = &Config{}
@@ -19,8 +20,18 @@ func init() {
 	}
 
 	config.Token = os.Getenv("BOT_TOKEN")
+	config.Proxy = os.Getenv("PROXY")
+
+	err = os.Setenv("TZ", "UTC")
+	if err != nil {
+		log.Println(err)
+	}
 }
 
 func GetToken() string {
+	return config.Token
+}
+
+func GetProxy() string {
 	return config.Token
 }

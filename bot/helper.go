@@ -5,8 +5,8 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"os"
 	"strconv"
+	"tgbot.go/config"
 )
 
 func timezoneParse(timezone string) (int64, error) {
@@ -30,7 +30,7 @@ func timezoneParse(timezone string) (int64, error) {
 }
 
 func getHttpClient() *http.Client {
-	proxy := os.Getenv("PROXY")
+	proxy := config.GetProxy()
 	if proxy != "" {
 		proxyURL, err := url.Parse(proxy)
 		if err != nil {

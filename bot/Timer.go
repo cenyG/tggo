@@ -2,53 +2,65 @@ package bot
 
 import (
 	"errors"
+	"fmt"
+	"strconv"
 	"strings"
+	"time"
 )
 
 type Timer struct {
-	time   string
-	text   string
-	repeat bool
-	chatId int64
+	duration time.Duration
+	text     string
+	repeat   bool
+	chatId   int64
 }
 
-const defaultText = "⏰⏰⏰ Alarmed ! ! ! ⏰⏰⏰"
+func (t Timer) String() string {
+	return fmt.Sprintf(`Timer: *** duration: %d, text: %s, repeat: %t, chatId: %d ***`, t.duration, t.text, t.repeat, t.chatId)
+}
 
-func NewTimer(text string, chatId int64) (*Timer, error) {
-	res := strings.Split(text, " ")
-
-	if res[0] == "every" { // every mm:ss text
-		mTime := res[1]
-		text := strings.Join(res[2:], " ")
+func NewTimer(textArray []string, chatId int64) (*Timer, error) {
+	if textArray[0] == "every" { // every mm:ss text
+		mTime := textArray[1]
+		text := strings.Join(textArray[2:], " ")
 		if text == "" {
 			text = defaultText
 		}
-		err := validateMinSec(mTime)
+		duration, err := parseMinSec(mTime)
 		if err != nil {
 			return nil, err
 		}
-		return &Timer{mTime, text, true, chatId}, nil
+		return &Timer{duration, text, true, chatId}, nil
 	} else { //mm:ss text
-		mTime := res[0]
-		text := strings.Join(res[1:], " ")
+		mTime := textArray[0]
+		text := strings.Join(textArray[1:], " ")
 		if text == "" {
 			text = defaultText
 		}
-		err := validateMinSec(mTime)
+		duration, err := parseMinSec(mTime)
 		if err != nil {
 			return nil, err
 		}
-		return &Timer{mTime, text, false, chatId}, nil
+		return &Timer{duration, text, false, chatId}, nil
 	}
 }
 
-func validateMinSec(text string) error {
+func parseMinSec(text string) (time.Duration, error) {
 	res := strings.Split(text, ":")
+
 	if len(res) == 2 {
 		if len(res[0]) > 1 && len(res[1]) == 2 {
-			return nil
+			min, err1 := strconv.ParseInt(res[0], 10, 64)
+			sec, err2 := strconv.ParseInt(res[1], 10, 64)
+
+			if min < 0 || min > maxMin || sec < 0 || sec > maxSec || err1 != nil || err2 != nil {
+				return 0, errors.New("bad min and sec format")
+			}
+			duration := time.Duration(min)*time.Minute + time.Duration(sec)*time.Second
+
+			return duration, nil
 		}
 	}
 
-	return errors.New("bad min and sec format ")
+	return 0, errors.New("bad min and sec format")
 }
