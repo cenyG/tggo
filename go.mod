@@ -1,4 +1,4 @@
-module tgbot.go
+module tgbot
 
 go 1.13
 
