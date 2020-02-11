@@ -1,8 +1,8 @@
 package main
 
 import (
-	"tgbot.go/bot"
-	_ "tgbot.go/config"
+	"tgbot/bot"
+	_ "tgbot/config"
 )
 
 func main() {

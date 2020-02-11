@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"tgbot.go/config"
+	"tgbot/config"
 	"time"
 )
 

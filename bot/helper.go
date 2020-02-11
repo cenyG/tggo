@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"tgbot.go/config"
+	"tgbot/config"
 )
 
 func timezoneParse(timezone string) (int64, error) {

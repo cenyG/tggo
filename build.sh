@@ -7,4 +7,4 @@ case "${unameOut}" in
     *)          goos=linux
 esac
 
-GOOS=${goos} GOARCH=amd64 go build -o tggo ./main.go
+GOOS=${goos} GOARCH=amd64 go build -mod vendor -o tggo ./main.go
