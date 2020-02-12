@@ -22,4 +22,4 @@ docker build .
 docker run -d {IMAGE_NAME}
 ```
 
-`.env` file contains `BOT_TOKEN` and `PROXY`(optional) to fill.
+You will need to create `.env` file contains `BOT_TOKEN` and `PROXY`(optional) to fill.
