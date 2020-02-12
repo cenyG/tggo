@@ -16,7 +16,7 @@ type Timer struct {
 }
 
 func (t Timer) String() string {
-	return fmt.Sprintf(`Timer: *** duration: %d, text: %s, repeat: %t, chatId: %d ***`, t.duration, t.text, t.repeat, t.chatId)
+	return fmt.Sprintf(`Timer: *** duration: %s, text: %s, repeat: %t, chatId: %d ***`, t.duration.String(), t.text, t.repeat, t.chatId)
 }
 
 func NewTimer(textArray []string, chatId int64) (*Timer, error) {

@@ -16,7 +16,7 @@ type Notification struct {
 }
 
 func (n Notification) String() string {
-	return fmt.Sprintf(`Notification: *** duration: %d, text: %s, repeat: %t, chatId: %d ***`, n.duration, n.text, n.repeat, n.chatId)
+	return fmt.Sprintf(`Notification: *** duration: %s, text: %s, repeat: %t, chatId: %d ***`, n.duration.String(), n.text, n.repeat, n.chatId)
 }
 
 func NewNotification(textArray []string, chatId int64, utcDiff int64) (*Notification, error) {
@@ -99,7 +99,7 @@ func parseTimeString(timeString string, utcDiff int64) (time.Duration, error) {
 		timeTo := time.Date(timeNow.Year(), timeNow.Month(), timeNow.Day(), mTime.Hour(), mTime.Minute(), 0, 0, time.UTC)
 
 		if timeTo.Unix() < timeNow.Unix() {
-			timeTo.AddDate(0, 0, 1)
+			timeTo = timeTo.AddDate(0, 0, 1)
 		}
 
 		duration = timeTo.Sub(timeNow)
