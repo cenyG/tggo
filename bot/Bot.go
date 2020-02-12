@@ -9,15 +9,9 @@ import (
 	"math/rand"
 	"strconv"
 	"strings"
-	"sync"
 	"tgbot/config"
 	"time"
 )
-
-type ConcurrentSlice struct {
-	sync.RWMutex
-	items []interface{}
-}
 
 type Bot struct {
 	client             *tgbotapi.BotAPI

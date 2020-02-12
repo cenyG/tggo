@@ -21,11 +21,6 @@ func init() {
 
 	config.Token = os.Getenv("BOT_TOKEN")
 	config.Proxy = os.Getenv("PROXY")
-
-	err = os.Setenv("TZ", "UTC")
-	if err != nil {
-		log.Println(err)
-	}
 }
 
 func GetToken() string {
