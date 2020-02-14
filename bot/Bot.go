@@ -13,11 +13,16 @@ import (
 	"time"
 )
 
+type TermTimer struct {
+	timer *time.Timer
+	term  chan bool
+}
+
 type Bot struct {
 	client             *tgbotapi.BotAPI
 	chatToTimezone     map[int64]int64
-	chatToTimer        map[int64]map[string]*time.Timer
-	chatToNotification map[int64]map[string]*time.Timer
+	chatToTimer        map[int64]map[string]*TermTimer
+	chatToNotification map[int64]map[string]*TermTimer
 }
 
 func NewBot() *Bot {
@@ -31,8 +36,8 @@ func NewBot() *Bot {
 	}
 
 	chatToTimezone := make(map[int64]int64)
-	chatToTimer := make(map[int64]map[string]*time.Timer)
-	chatToNotification := make(map[int64]map[string]*time.Timer)
+	chatToTimer := make(map[int64]map[string]*TermTimer)
+	chatToNotification := make(map[int64]map[string]*TermTimer)
 
 	log.Printf("Authorized on account %s", client.Self.UserName)
 
@@ -165,24 +170,32 @@ func (b *Bot) createTimerJob(mTimer *Timer) {
 	log.Printf("[Set] %s", mTimer)
 
 	if b.chatToTimer[mTimer.chatId] == nil {
-		b.chatToTimer[mTimer.chatId] = make(map[string]*time.Timer)
+		b.chatToTimer[mTimer.chatId] = make(map[string]*TermTimer)
 	}
 	chatMap := b.chatToTimer[mTimer.chatId]
 
 	shaStr := shaString(strconv.Itoa(rand.Int()))
-	chatMap[shaStr] = timer
+	termTimer := &TermTimer{timer, make(chan bool)}
+	chatMap[shaStr] = termTimer
 
-	timerEnd := <-timer.C
-	delete(chatMap, shaStr)
+	for {
+		select {
+		case endTime := <-timer.C:
+			delete(chatMap, shaStr)
+			log.Printf("[End] %s, time: %s", mTimer, endTime)
 
-	log.Printf("[End] %s, time: %s", mTimer, timerEnd)
+			msg := tgbotapi.NewMessage(mTimer.chatId, mTimer.text)
+			b.client.Send(msg)
 
-	msg := tgbotapi.NewMessage(mTimer.chatId, mTimer.text)
-	b.client.Send(msg)
-
-	if mTimer.repeat {
-		go b.createTimerJob(mTimer)
+			if mTimer.repeat {
+				go b.createTimerJob(mTimer)
+			}
+		case <-termTimer.term:
+			log.Printf("[Unsubscribe] %s", mTimer)
+			return
+		}
 	}
+
 }
 
 func (b *Bot) createNotificationJob(notification *Notification) {
@@ -190,24 +203,31 @@ func (b *Bot) createNotificationJob(notification *Notification) {
 	log.Printf("[Set] %s", notification)
 
 	if b.chatToNotification[notification.chatId] == nil {
-		b.chatToNotification[notification.chatId] = make(map[string]*time.Timer)
+		b.chatToNotification[notification.chatId] = make(map[string]*TermTimer)
 	}
 	chatMap := b.chatToNotification[notification.chatId]
 
 	shaStr := shaString(strconv.Itoa(rand.Int()))
-	chatMap[shaStr] = timer
+	termTimer := &TermTimer{timer, make(chan bool)}
+	chatMap[shaStr] = termTimer
 
-	timerEnd := <-timer.C
-	delete(chatMap, shaStr)
+	for {
+		select {
+		case endTime := <-timer.C:
+			delete(chatMap, shaStr)
+			log.Printf("[End] %s, time: %s", notification, endTime)
 
-	log.Printf("[End] %s, time: %s", notification, timerEnd)
+			msg := tgbotapi.NewMessage(notification.chatId, notification.text)
+			b.client.Send(msg)
 
-	msg := tgbotapi.NewMessage(notification.chatId, notification.text)
-	b.client.Send(msg)
-
-	if notification.repeat {
-		notification.duration = 24 * time.Hour
-		go b.createNotificationJob(notification)
+			if notification.repeat {
+				notification.duration = 24 * time.Hour
+				go b.createNotificationJob(notification)
+			}
+		case <-termTimer.term:
+			log.Printf("[Unsubscribe] %s", notification)
+			return
+		}
 	}
 }
 
@@ -227,14 +247,16 @@ func (b *Bot) handleStatus(msg *tgbotapi.MessageConfig) {
 
 func (b *Bot) handleClear(update tgbotapi.Update, msg *tgbotapi.MessageConfig) {
 	timersMap := b.chatToTimer[msg.ChatID]
-	for key, timer := range timersMap {
-		timer.Stop()
+	for key, termTimer := range timersMap {
+		termTimer.timer.Stop()
+		termTimer.term <- true
 		delete(timersMap, key)
 	}
 
 	notifiersMap := b.chatToNotification[msg.ChatID]
-	for key, timer := range notifiersMap {
-		timer.Stop()
+	for key, termTimer := range notifiersMap {
+		termTimer.timer.Stop()
+		termTimer.term <- true
 		delete(notifiersMap, key)
 	}
 }
