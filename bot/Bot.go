@@ -7,6 +7,7 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"log"
 	"math/rand"
+	"os"
 	"strconv"
 	"strings"
 	"tgbot/config"
@@ -23,6 +24,7 @@ type Bot struct {
 	chatToTimezone     map[int64]int64
 	chatToTimer        map[int64]map[string]*TermTimer
 	chatToNotification map[int64]map[string]*TermTimer
+	chatToScreener     map[int64]map[string]*TermTimer
 }
 
 func NewBot() *Bot {
@@ -38,10 +40,11 @@ func NewBot() *Bot {
 	chatToTimezone := make(map[int64]int64)
 	chatToTimer := make(map[int64]map[string]*TermTimer)
 	chatToNotification := make(map[int64]map[string]*TermTimer)
+	chatToScreener := make(map[int64]map[string]*TermTimer)
 
 	log.Printf("Authorized on account %s", client.Self.UserName)
 
-	return &Bot{client, chatToTimezone, chatToTimer, chatToNotification}
+	return &Bot{client, chatToTimezone, chatToTimer, chatToNotification, chatToScreener}
 }
 
 func (b *Bot) handleUpdates() {
@@ -81,6 +84,9 @@ func (b *Bot) handleUpdates() {
 
 			case "timer":
 				b.handleTimer(update, &msg)
+
+			case "screen":
+				b.handleScreen(update, &msg)
 
 			case "clear":
 				b.handleClear(update, &msg)
@@ -165,6 +171,21 @@ func (b *Bot) handleTimer(update tgbotapi.Update, msg *tgbotapi.MessageConfig) {
 	}
 }
 
+func (b *Bot) handleScreen(update tgbotapi.Update, msg *tgbotapi.MessageConfig) {
+	chatId := msg.ChatID
+	textArray := strings.Split(update.Message.Text, " ")
+
+	utcDiff, _ := b.chatToTimezone[chatId]
+
+	screener, err := NewScreener(textArray[1:], chatId, utcDiff)
+	if err != nil {
+		msg.Text = err.Error()
+	} else {
+		go b.createScreenerJob(screener)
+		msg.Text = "Screener set *successfully*!"
+	}
+}
+
 func (b *Bot) createTimerJob(mTimer *Timer) {
 	timer := time.NewTimer(mTimer.duration)
 	log.Printf("[Set] %s", mTimer)
@@ -226,6 +247,49 @@ func (b *Bot) createNotificationJob(notification *Notification) {
 			}
 		case <-termTimer.term:
 			log.Printf("[Unsubscribe] %s", notification)
+			return
+		}
+	}
+}
+
+func (b *Bot) createScreenerJob(screener *Screener) {
+	timer := time.NewTimer(screener.duration)
+	log.Printf("[Set] %s", screener)
+
+	if b.chatToScreener[screener.chatId] == nil {
+		b.chatToScreener[screener.chatId] = make(map[string]*TermTimer)
+	}
+	chatMap := b.chatToScreener[screener.chatId]
+
+	shaStr := shaString(strconv.Itoa(rand.Int()))
+	termTimer := &TermTimer{timer, make(chan bool)}
+	chatMap[shaStr] = termTimer
+
+	for {
+		select {
+		case endTime := <-timer.C:
+			delete(chatMap, shaStr)
+			log.Printf("[End] %s, time: %s", screener, endTime)
+			filePath, err := screener.MakeScreen()
+			if err != nil {
+				log.Println(`make screen error. filepath: `+filePath, err)
+				msg := tgbotapi.NewMessage(screener.chatId, `error while capture screen`)
+				b.client.Send(msg)
+				return
+			}
+			photo := tgbotapi.NewDocumentUpload(screener.chatId, filePath)
+			b.client.Send(photo)
+
+			if err := os.Remove(filePath); err != nil {
+				log.Println(`error file delete`, err)
+			}
+
+			if screener.repeat {
+				screener.duration = 24 * time.Hour
+				go b.createScreenerJob(screener)
+			}
+		case <-termTimer.term:
+			log.Printf("[Unsubscribe] %s", screener)
 			return
 		}
 	}

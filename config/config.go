@@ -16,7 +16,7 @@ var config = &Config{}
 func init() {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.Println("error loading .env file", err)
 	}
 
 	config.Token = os.Getenv("BOT_TOKEN")
@@ -28,5 +28,5 @@ func GetToken() string {
 }
 
 func GetProxy() string {
-	return config.Token
+	return config.Proxy
 }
