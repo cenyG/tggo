@@ -101,7 +101,7 @@ func (s *Screener) MakeScreen() (string, error) {
 	}
 
 	screenFileNamePattern := time.Now().UTC().Format(`2006-01-02T15:04_`) + strconv.FormatInt(s.chatId, 10) + "_*" + ".png"
-	tmpFile, err := ioutil.TempFile(`./`, screenFileNamePattern)
+	tmpFile, err := ioutil.TempFile(``, screenFileNamePattern)
 	if err != nil {
 		return ``, err
 	}
