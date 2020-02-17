@@ -16,7 +16,8 @@ var config = &Config{}
 func init() {
 	err := godotenv.Load()
 	if err != nil {
-		log.Println("error loading .env file", err)
+		//set .env variables manually in user console if use heroku
+		log.Println(err)
 	}
 
 	config.Token = os.Getenv("BOT_TOKEN")
