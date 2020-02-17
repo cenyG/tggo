@@ -8,7 +8,8 @@ Bot have following commands:
 /timezone  - Set your timezone
 /set       - Create notification: HH:mm, DD/MM/YYYY
 /timer     - Create timer: mm:SS
-/clear     - Clear all timers/notifications
+/screen    - Create screener: HH:mm, DD/MM/YYYY
+/clear     - Clear all timers/notifications/screeners
 ```
 
 #####Run dev:

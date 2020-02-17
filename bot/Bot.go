@@ -311,16 +311,19 @@ func (b *Bot) handleStatus(msg *tgbotapi.MessageConfig) {
 
 func (b *Bot) handleClear(update tgbotapi.Update, msg *tgbotapi.MessageConfig) {
 	timersMap := b.chatToTimer[msg.ChatID]
-	for key, termTimer := range timersMap {
-		termTimer.timer.Stop()
-		termTimer.term <- true
-		delete(timersMap, key)
-	}
-
 	notifiersMap := b.chatToNotification[msg.ChatID]
-	for key, termTimer := range notifiersMap {
-		termTimer.timer.Stop()
-		termTimer.term <- true
-		delete(notifiersMap, key)
+	screenersMap := b.chatToScreener[msg.ChatID]
+
+	stopTimers(timersMap, notifiersMap, screenersMap)
+
+}
+
+func stopTimers(timersMaps ...map[string]*TermTimer) {
+	for _, timersMap := range timersMaps {
+		for key, termTimer := range timersMap {
+			termTimer.timer.Stop()
+			termTimer.term <- true
+			delete(timersMap, key)
+		}
 	}
 }
