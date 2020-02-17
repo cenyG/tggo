@@ -28,6 +28,9 @@ func (s Screener) String() string {
 }
 
 func NewScreener(textArray []string, chatId int64, utcDiff int64) (*Screener, error) {
+	if len(textArray) == 0 {
+		return nil, errors.New(`bad format`)
+	}
 	first := textArray[0]
 	second := ""
 	if len(textArray) > 1 {

@@ -20,6 +20,9 @@ func (t Timer) String() string {
 }
 
 func NewTimer(textArray []string, chatId int64) (*Timer, error) {
+	if len(textArray) == 0 {
+		return nil, errors.New(`bad format`)
+	}
 	if textArray[0] == "every" { // every mm:ss text
 		mTime := textArray[1]
 		text := strings.Join(textArray[2:], " ")
