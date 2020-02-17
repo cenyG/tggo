@@ -2,3 +2,4 @@ vendor/
 .idea/
 tggo
 .env
+.DS_Store

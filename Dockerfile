@@ -25,4 +25,4 @@ WORKDIR /app
 COPY . .
 RUN sh build.sh
 
-ENTRYPOINT ["/bin/sh", "-c", "./tggo"]
+CMD ["/bin/sh", "-c", "./tggo"]
