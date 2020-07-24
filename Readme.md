@@ -1,4 +1,4 @@
-##TgBot
+## TgBot
 This is educational project to learn *GoLang* and also *Telegram API*.   
 
 Bot have following commands:
@@ -11,12 +11,12 @@ Bot have following commands:
 /clear     - Clear all timers/notifications
 ```
 
-#####Run dev:
+##### Run dev:
 ```
 ./dev.sh
 ```
 
-#####Run Docker:
+##### Run Docker:
 ```
 docker build .
 docker run -d {IMAGE_NAME}
