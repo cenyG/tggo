@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"os"
 	"strconv"
+	"strings"
 	"tgbot/config"
 	"time"
 )
@@ -122,4 +123,12 @@ func removeFile(filePath string) {
 	if err := os.Remove(filePath); err != nil {
 		log.Println(`error while file delete`, err)
 	}
+}
+
+func parseUrl(url string) string {
+	if !(strings.HasPrefix(url, "http://") || strings.HasPrefix(url, "https://")) {
+		url = "https://" + url
+	}
+
+	return url
 }

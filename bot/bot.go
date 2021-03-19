@@ -119,7 +119,7 @@ func (b *Bot) handleInstantScreen(update tgbotapi.Update, msg *tgbotapi.MessageC
 
 	b.sendScreen(chatId, &Screener{
 		duration: 0,
-		url:      textArray[1],
+		url:      parseUrl(textArray[1]),
 		chatId:   chatId,
 	})
 }

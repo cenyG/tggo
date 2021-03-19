@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"strconv"
 	"time"
-	"strings"
 )
 
 type Screener struct {
@@ -21,10 +20,6 @@ func (s *Screener) String() string {
 }
 
 func NewScreener(chatId int64, time string, url string) (*Screener, error) {
-	if !(strings.HasPrefix(url, "http://") || strings.HasPrefix(url, "https://")) {
-		url = "https://" + url
-	}
-
 	duration, err := parseTimeString(time)
 	if err != nil {
 		return nil, err
@@ -32,7 +27,7 @@ func NewScreener(chatId int64, time string, url string) (*Screener, error) {
 
 	return &Screener{
 		*duration,
-		url,
+		parseUrl(url),
 		chatId,
 	}, nil
 }
