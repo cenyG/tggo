@@ -191,6 +191,12 @@ func (b *Bot) handleStatus(msg *tgbotapi.MessageConfig) {
 
 func (b *Bot) handleClear(update tgbotapi.Update, msg *tgbotapi.MessageConfig) {
 	screenersMap := b.chatToScreener[msg.ChatID]
+
+	if len(screenersMap) == 0 {
+		msg.Text = "There are no active screeners now."
+	} else {
+		msg.Text = fmt.Sprintf("Stoping %d screeners.", len(screenersMap))
+	}
 	stopTimers(screenersMap)
 }
 
