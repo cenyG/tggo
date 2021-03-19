@@ -172,14 +172,14 @@ func (b *Bot) createScreenerJob(screener *Screener) {
 
 func (b *Bot) sendScreen(chatId int64, screener *Screener) {
 	filePath, err := screener.MakeScreen()
-	defer removeFile(filePath)
-
 	if err != nil {
-		log.Println(`make screen error. filepath: `+filePath, err)
-		msg := tgbotapi.NewMessage(screener.chatId, `error while capture screen`)
+		log.Println(`[error] make screen error. filepath: `, screener, err)
+		msg := tgbotapi.NewMessage(screener.chatId, `Something went wrong with your site. You can try to add *https://www* prefix, some times it's helpful'`)
 		b.client.Send(msg)
 		return
 	}
+
+	defer removeFile(filePath)
 
 	photo := tgbotapi.NewDocumentUpload(chatId, filePath)
 	b.client.Send(photo)
