@@ -5,11 +5,8 @@ Bot have following commands:
 ```
 /help      - Help
 /status    - Show your active timers/notificators
-/timezone  - Set your timezone
-/set       - Create notification: HH:mm, DD/MM/YYYY
-/timer     - Create timer: mm:SS
-/screen    - Create screener: HH:mm, DD/MM/YYYY
-/clear     - Clear all timers/notifications/screeners
+/screen    - Make instant screen
+/every     - Make screen every `m(min)`, `h(hour)`, `d(day)`. Example: `/every 5m google.com
 ```
 
 ##### Run dev:
