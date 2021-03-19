@@ -33,7 +33,10 @@ func NewScreener(chatId int64, time string, url string) (*Screener, error) {
 }
 
 func (s *Screener) MakeScreen() (string, error) {
-	ctx, cancel := chromedp.NewContext(context.Background())
+	ctx, cancel := chromedp.NewExecAllocator(context.Background(), chromedp.NoSandbox, chromedp.Headless)
+	defer cancel()
+
+	ctx, cancel = chromedp.NewContext(ctx)
 	defer cancel()
 
 	var buf []byte

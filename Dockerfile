@@ -16,12 +16,12 @@ RUN apk add --no-cache \
 ENV CHROME_BIN=/usr/bin/chromium-browser \
     CHROME_PATH=/usr/lib/chromium/
 
-RUN chown root:root /usr/lib/chromium/chrome-sandbox
-RUN chmod 4775 /usr/lib/chromium/chrome-sandbox
-
 # set timezone UTC
 RUN cp /usr/share/zoneinfo/Etc/UTC /etc/localtime \
     && echo "Etc/UTC" >  /etc/timezone
+
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+USER appuser
 
 WORKDIR /app
 

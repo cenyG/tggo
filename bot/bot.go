@@ -93,18 +93,18 @@ func (b *Bot) Start() {
 
 func (b *Bot) handleHelp(msg *tgbotapi.MessageConfig) {
 	var help = []string{
-		"This BOT will make notifications for you.",
+		"Hi, I'm *Sceeny*, I can make some site screenshots for you.",
 
 		"You can use the following *commands*:\n",
 
-		"_Make screen:_",
-		"*/screen google.com*\n",
+		"*Make screen:*",
+		"/screen URL\n",
 
-		"_Make screen every *m*(Min), *h*(Hour), *d*(Day):_",
-		"*/every 1h google.com*\n",
+		"*Make screen every minute(m), hour(h), day(d):*",
+		"/every 1h google.com\n",
 
-		"_Clear all timing screeners:_",
-		"*/clear*\n",
+		"*Clear all timing screeners:*",
+		"/clear\n",
 	}
 	msg.Text = strings.Join(help, "\n")
 }
