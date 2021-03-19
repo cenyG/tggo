@@ -68,13 +68,13 @@ func (b *Bot) handleUpdates() {
 				b.handleStatus(&msg)
 
 			case "screen":
-				b.handleInstantScreen(update, &msg)
+				go b.handleInstantScreen(update, &msg)
 
 			case "every":
 				b.handleTimeScreen(update, &msg)
 
 			case "clear":
-				b.handleClear(update, &msg)
+				b.handleClear(&msg)
 
 			default:
 				msg.Text = "I don't know that command"
@@ -189,7 +189,7 @@ func (b *Bot) handleStatus(msg *tgbotapi.MessageConfig) {
 	msg.Text += fmt.Sprintf("Active timers: *%d*\n", len(b.chatToScreener[msg.ChatID]))
 }
 
-func (b *Bot) handleClear(update tgbotapi.Update, msg *tgbotapi.MessageConfig) {
+func (b *Bot) handleClear(msg *tgbotapi.MessageConfig) {
 	screenersMap := b.chatToScreener[msg.ChatID]
 
 	if len(screenersMap) == 0 {
