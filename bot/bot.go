@@ -98,10 +98,10 @@ func (b *Bot) handleHelp(msg *tgbotapi.MessageConfig) {
 		"You can use the following *commands*:\n",
 
 		"*Make screen:*",
-		"/screen URL\n",
+		"/screen https://google.com\n",
 
 		"*Make screen every minute(m), hour(h), day(d):*",
-		"/every 1h google.com\n",
+		"/every 1h https://google.com\n",
 
 		"*Clear all timing screeners:*",
 		"/clear\n",
