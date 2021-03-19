@@ -126,6 +126,8 @@ func removeFile(filePath string) {
 }
 
 func parseUrl(url string) string {
+	url = strings.TrimSpace(url)
+
 	if !(strings.HasPrefix(url, "http://") || strings.HasPrefix(url, "https://")) {
 		url = "https://" + url
 	}
