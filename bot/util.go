@@ -21,10 +21,10 @@ func fullScreenshot(url string, quality int64, res *[]byte) chromedp.Tasks {
 	return chromedp.Tasks{
 		chromedp.Navigate(url),
 		chromedp.ActionFunc(func(ctx context.Context) error {
-			time.Sleep(10 * time.Second)
+			time.Sleep(1 * time.Second)
 			return nil
 		}),
-		//chromedp.WaitReady(`html`, chromedp.ByQuery),
+		chromedp.WaitReady(`html`, chromedp.ByQuery),
 		chromedp.ActionFunc(func(ctx context.Context) error {
 			// get layout metrics
 			_, _, contentSize, err := page.GetLayoutMetrics().Do(ctx)
