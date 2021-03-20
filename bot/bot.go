@@ -174,7 +174,10 @@ func (b *Bot) sendScreen(chatId int64, screener *Screener) {
 	filePath, err := screener.MakeScreen()
 	if err != nil {
 		log.Println(`[error] make screen error. filepath: `, screener, err)
-		msg := tgbotapi.NewMessage(screener.chatId, `Something went wrong with your site. You can try to add *https://www* prefix, some times it's helpful'`)
+
+		msg := tgbotapi.NewMessage(screener.chatId, "Something went wrong with your site. You can try to add *https://www* prefix, some times it's helpful")
+		msg.ParseMode = "Markdown"
+
 		b.client.Send(msg)
 		return
 	}
