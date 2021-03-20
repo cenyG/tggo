@@ -16,7 +16,7 @@ type Screener struct {
 }
 
 func (s *Screener) String() string {
-	return fmt.Sprintf(`Screener: *** duration: %s, url: %s, chatId: %d ***`, s.duration.String(), s.url, s.chatId)
+	return fmt.Sprintf(`[screener]: duration: %s, url: %s, chatId: %d`, s.duration.String(), s.url, s.chatId)
 }
 
 func NewScreener(chatId int64, time string, url string) (*Screener, error) {

@@ -157,7 +157,6 @@ func (b *Bot) createScreenerJob(screener *Screener) {
 	for {
 		select {
 		case endTime := <-timer.C:
-			delete(chatMap, shaStr)
 			log.Printf("[make:screen] %s, time: %s", screener, endTime)
 
 			b.sendScreen(screener.chatId, screener)
